@@ -24,6 +24,9 @@ const ADAPTER_CLASSES = {
 
 const providerSelect = document.getElementById('providerSelect');
 const apiKeyInput = document.getElementById('apiKeyInput');
+const ollamaUrlInput = document.getElementById('ollamaUrlInput');
+const apiKeyField = document.getElementById('apiKeyField');
+const ollamaUrlField = document.getElementById('ollamaUrlField');
 const testConnectionBtn = document.getElementById('testConnectionBtn');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
 const testResult = document.getElementById('testResult');
@@ -50,8 +53,11 @@ async function init() {
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
   apiKeyInput.value = apiKeys[provider] || '';
 
-  updateApiKeyUI(provider);
+  const ollamaUrls = await local.get(STORAGE_KEYS.OLLAMA_URLS, {});
+  ollamaUrlInput.value = ollamaUrls[provider] || '';
+
   await loadModelInputsForProvider(provider);
+  updateProviderUI(provider);
 
   groupingEnabled.checked = await local.get(STORAGE_KEYS.GROUPING_ENABLED, true);
   renamingEnabled.checked = await local.get(STORAGE_KEYS.RENAMING_ENABLED, true);
@@ -61,24 +67,20 @@ async function init() {
   exclusionListInput.value = exclusionList.join('\n');
 
   providerSelect.addEventListener('change', async () => {
-    const selectedProvider = providerSelect.value;
     const apiKeysNow = await local.get(STORAGE_KEYS.API_KEYS, {});
-    apiKeyInput.value = apiKeysNow[selectedProvider] || '';
-    
-    updateApiKeyUI(selectedProvider);
+    apiKeyInput.value = apiKeysNow[providerSelect.value] || '';
+    const ollamaUrlsNow = await local.get(STORAGE_KEYS.OLLAMA_URLS, {});
+    ollamaUrlInput.value = ollamaUrlsNow[providerSelect.value] || '';
     testResult.textContent = '';
-    await loadModelInputsForProvider(selectedProvider);
+    await loadModelInputsForProvider(providerSelect.value);
+    updateProviderUI(providerSelect.value);
   });
 }
 
-function updateApiKeyUI(provider) {
-  if (provider === PROVIDERS.OLLAMA) {
-    apiKeyInput.placeholder = 'Not required for local Ollama';
-    apiKeyInput.disabled = true;
-  } else {
-    apiKeyInput.placeholder = 'Enter API key';
-    apiKeyInput.disabled = false;
-  }
+function updateProviderUI(provider) {
+  const isOllama = provider === PROVIDERS.OLLAMA;
+  apiKeyField.style.display = isOllama ? 'none' : 'block';
+  ollamaUrlField.style.display = isOllama ? 'block' : 'none';
 }
 
 async function loadModelInputsForProvider(provider) {
@@ -93,25 +95,31 @@ async function loadModelInputsForProvider(provider) {
 
 testConnectionBtn.addEventListener('click', async () => {
   const provider = providerSelect.value;
-  const key = apiKeyInput.value.trim();
+  const isOllama = provider === PROVIDERS.OLLAMA;
+  const key = isOllama ? '' : apiKeyInput.value.trim();
+  const ollamaUrl = isOllama ? ollamaUrlInput.value.trim() || 'http://localhost:11434' : '';
+
   testResult.textContent = 'Testing…';
   testResult.className = 'test-result';
 
-  if (!key && provider !== PROVIDERS.OLLAMA) {
+  if (!isOllama && !key) {
     testResult.textContent = 'Enter an API key first.';
     testResult.className = 'test-result error';
     return;
   }
 
   const AdapterClass = ADAPTER_CLASSES[provider];
-  const adapter = new AdapterClass(key);
-  const model = (DEFAULT_MODELS[provider] || {}).renaming || (DEFAULT_MODELS[provider] || {}).grouping;
+  const adapter = isOllama ? new AdapterClass('', ollamaUrl) : new AdapterClass(key);
+
+  const modelChoices = await local.get(STORAGE_KEYS.MODEL_CHOICES, {});
+  const overrides = modelChoices[provider] || {};
+  const model = overrides.renaming || (DEFAULT_MODELS[provider] || {}).renaming;
 
   try {
     await adapter.complete({
       system: 'Reply with the single word OK and nothing else.',
       prompt: 'Connection test.',
-      maxTokens: 200,
+      maxTokens: 200000,
       model
     });
     testResult.textContent = 'Connected successfully.';
@@ -124,14 +132,20 @@ testConnectionBtn.addEventListener('click', async () => {
 
 saveKeyBtn.addEventListener('click', async () => {
   const provider = providerSelect.value;
-  const key = apiKeyInput.value.trim();
+  const isOllama = provider === PROVIDERS.OLLAMA;
+  const key = isOllama ? '' : apiKeyInput.value.trim();
+  const ollamaUrl = isOllama ? ollamaUrlInput.value.trim() || 'http://localhost:11434' : '';
 
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
   apiKeys[provider] = key;
 
+  const ollamaUrls = await local.get(STORAGE_KEYS.OLLAMA_URLS, {});
+  ollamaUrls[provider] = ollamaUrl;
+
   await local.set({
     [STORAGE_KEYS.PROVIDER]: provider,
     [STORAGE_KEYS.API_KEYS]: apiKeys,
+    [STORAGE_KEYS.OLLAMA_URLS]: ollamaUrls,
     // Saving a (presumably fixed) key clears any previous pause state so
     // the pipelines get a fresh chance rather than waiting for the next
     // failure/success cycle.
@@ -139,7 +153,7 @@ saveKeyBtn.addEventListener('click', async () => {
     [STORAGE_KEYS.RENAMING_PAUSED]: { paused: false, reason: null }
   });
 
-  showToast('Provider & key saved.');
+  showToast('Provider & settings saved.');
 });
 
 saveModelsBtn.addEventListener('click', async () => {

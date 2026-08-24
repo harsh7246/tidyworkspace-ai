@@ -1,33 +1,75 @@
-export async function queryOllama(prompt, systemPrompt) {
-  // Ollama's default local API endpoint
-  const url = 'http://localhost:11434/v1/chat/completions';
+// background/adapters/ollamaAdapter.js
+//
+// Ollama adapter for local models. Uses Ollama's native /api/chat endpoint.
+// The Origin header is stripped by declarativeNetRequest rules to avoid
+// Ollama's CORS block on chrome-extension:// origins.
 
-  const requestBody = {
-    model: 'deepseek-coder:1.3b', // Or whatever model you downloaded
-    messages: [
-      { role: 'system', content: systemPrompt },
+import { LLMAdapter, LLMAdapterError } from './adapter.interface.js';
+
+const DEFAULT_BASE_URL = 'http://localhost:11434';
+
+export class OllamaAdapter extends LLMAdapter {
+  constructor(apiKey, baseUrl = DEFAULT_BASE_URL) {
+    super(apiKey);
+    // Strip trailing slash and any /v1 suffix since we use the native API
+    this.baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '');
+  }
+
+  async complete({ system, prompt, responseSchema, maxTokens = 1024, model, signal }) {
+    const url = `${this.baseUrl}/api/chat`;
+
+    let effectiveSystem = system;
+    const body = {
+      model: model || 'qwen2.5:14b',
+      messages: [],
+      stream: false,
+      options: {
+        num_predict: maxTokens
+      }
+    };
+
+    if (responseSchema) {
+      effectiveSystem =
+        `${system}\n\nYou MUST respond with a single JSON object only — no markdown fences, ` +
+        `no commentary. It must conform to this JSON schema:\n${JSON.stringify(responseSchema)}`;
+      body.format = responseSchema;
+    }
+
+    body.messages = [
+      { role: 'system', content: effectiveSystem },
       { role: 'user', content: prompt }
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.0
-  };
+    ];
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal
+      });
+    } catch (err) {
+      throw new LLMAdapterError(`Ollama network error: ${err.message}. Is Ollama running at ${this.baseUrl}?`, { retriable: true, cause: err });
+    }
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status}`);
+      const retriable = response.status === 429 || response.status >= 500;
+      const text = await response.text().catch(() => '');
+      throw new LLMAdapterError(`Ollama API error ${response.status}: ${text}`, {
+        status: response.status,
+        retriable
+      });
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
-    
-  } catch (error) {
-    console.error("Local model failed. Is Ollama running?", error);
-    throw error;
+    const content = data.message?.content;
+    if (content === undefined) {
+      throw new LLMAdapterError('Ollama response missing message content', { retriable: false });
+    }
+    return content;
   }
 }
