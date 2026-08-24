@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TidyWorkspace AI</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>TidyWorkspace AI</h1>
+    <button id="openOptions" class="icon-btn" title="Settings">⚙</button>
+  </header>
+
+  <section id="statusSection" class="status-section"></section>
+
+  <section class="toggles">
+    <label class="toggle-row">
+      <span>Tab grouping</span>
+      <input type="checkbox" id="groupingToggle" />
+    </label>
+    <label class="toggle-row">
+      <span>Download renaming</span>
+      <input type="checkbox" id="renamingToggle" />
+    </label>
+  </section>
+
+  <section class="log-section">
+    <div class="log-header">
+      <h2>Recent activity</h2>
+    </div>
+    <ul id="actionLog" class="action-log"></ul>
+    <p id="emptyLog" class="empty-state">Nothing yet — activity will show up here.</p>
+  </section>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

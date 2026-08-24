@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TidyWorkspace AI — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>TidyWorkspace AI — Settings</h1>
+
+    <section class="card">
+      <h2>1. Provider & API key</h2>
+      <p class="hint">
+        Your key is stored locally in this browser profile only (<code>chrome.storage.local</code>) and is
+        never sent anywhere except directly to your chosen provider's API.
+      </p>
+
+      <label class="field">
+        <span>Provider</span>
+        <select id="providerSelect">
+          <option value="gemini">Google Gemini</option>
+          <option value="openai">OpenAI</option>
+          <option value="claude">Anthropic Claude</option>
+          <option value="deepseek">DeepSeek</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>API key</span>
+        <input type="password" id="apiKeyInput" placeholder="Paste your API key" autocomplete="off" />
+      </label>
+
+      <div class="row">
+        <button id="testConnectionBtn" class="btn secondary">Test connection</button>
+        <button id="saveKeyBtn" class="btn primary">Save</button>
+        <span id="testResult" class="test-result"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Models per feature</h2>
+      <p class="hint">Optional — defaults are a cheaper/faster model for renaming and a stronger one for grouping.</p>
+      <label class="field">
+        <span>Grouping model</span>
+        <input type="text" id="groupingModelInput" placeholder="e.g. claude-sonnet-4-6" />
+      </label>
+      <label class="field">
+        <span>Renaming model</span>
+        <input type="text" id="renamingModelInput" placeholder="e.g. claude-haiku-4-5-20251001" />
+      </label>
+      <div class="row">
+        <button id="saveModelsBtn" class="btn primary">Save models</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Pipelines</h2>
+      <label class="toggle-row">
+        <span>Tab grouping</span>
+        <input type="checkbox" id="groupingEnabled" />
+      </label>
+      <label class="toggle-row">
+        <span>Download renaming</span>
+        <input type="checkbox" id="renamingEnabled" />
+      </label>
+      <label class="field">
+        <span>Sweep interval (minutes, min 0.5)</span>
+        <input type="number" id="sweepIntervalInput" min="0.5" step="0.5" />
+      </label>
+      <div class="row">
+        <button id="saveSweepBtn" class="btn primary">Save interval</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4. Privacy & data sent</h2>
+      <p class="hint">
+        On every sweep, tab titles and domains (not full URLs) for ungrouped tabs are sent to your selected
+        provider so it can suggest groupings. On every non-excluded download, the filename, MIME type, and
+        the active tab's title/domain are sent so it can suggest a clean filename. Nothing is sent to
+        Anthropic or any TidyWorkspace-run server — only to the provider you configure above, using your key.
+      </p>
+      <label class="field">
+        <span>Domain exclusion list (one per line — supports <code>*</code> wildcards)</span>
+        <textarea id="exclusionListInput" rows="8" placeholder="localhost&#10;bankofamerica.com&#10;*.internal"></textarea>
+      </label>
+      <div class="row">
+        <button id="saveExclusionBtn" class="btn primary">Save exclusion list</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>5. Activity log</h2>
+      <div class="row">
+        <button id="clearLogBtn" class="btn secondary">Clear activity log</button>
+      </div>
+    </section>
+
+    <p id="savedToast" class="saved-toast"></p>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>
