@@ -46,15 +46,70 @@ export function similarity(a, b) {
   return 1 - dist / maxLen;
 }
 
+// Category alias groups — names in the same group are treated as identical
+// for dedup purposes. This prevents "Shop" / "Shopping", "Dev" / "Development",
+// "Social" / "Social Media" etc. from becoming separate groups.
+const CATEGORY_ALIASES = [
+  ['shopping', 'shop', 'store', 'stores', 'ecommerce', 'marketplace'],
+  ['development', 'dev', 'coding', 'programming', 'code', 'software', 'engineering'],
+  ['social', 'social media', 'social networking', 'networking'],
+  ['research', 'researching', 'study', 'studies', 'academic', 'academia'],
+  ['news', 'news sites', 'news sources', 'headlines', 'press'],
+  ['entertainment', 'fun', 'leisure', 'media'],
+  ['travel', 'trips', 'vacation', 'booking', 'flights', 'hotels'],
+  ['finance', 'financial', 'banking', 'money', 'investing', 'investment', 'stocks'],
+  ['education', 'learning', 'courses', 'tutorials', 'education resources'],
+  ['productivity', 'productive', 'task management', 'project management', 'todo'],
+  ['music', 'audio', 'songs', 'playlists'],
+  ['video', 'videos', 'streaming', 'watch'],
+  ['gaming', 'games', 'game', 'esports'],
+  ['food', 'cooking', 'recipes', 'restaurants', 'dining'],
+  ['health', 'healthcare', 'medical', 'fitness', 'wellness'],
+  ['cloud', 'hosting', 'infrastructure', 'devops'],
+  ['email', 'mail', 'inbox', 'messages'],
+  ['docs', 'documents', 'documentation', 'notes', 'wiki'],
+  ['maps', 'navigation', 'directions', 'location'],
+  ['ai tools', 'ai', 'artificial intelligence', 'llm', 'chatbot', 'machine learning'],
+  ['design', 'ui', 'ux', 'graphics', 'creative', 'art'],
+  ['government', 'gov', 'official', 'public sector'],
+  ['work', 'workspace', 'office', 'business', 'corporate', 'enterprise']
+];
+
+// Build a fast lookup: normalized name -> canonical alias group name
+const ALIAS_LOOKUP = new Map();
+for (const group of CATEGORY_ALIASES) {
+  const canonical = group[0];
+  for (const alias of group) {
+    ALIAS_LOOKUP.set(alias, canonical);
+  }
+}
+
+/**
+ * Normalize a group name to its canonical alias form.
+ * Returns the canonical name if found, otherwise the lowercased trimmed input.
+ */
+export function normalizeToAlias(name) {
+  const lower = name.trim().toLowerCase();
+  return ALIAS_LOOKUP.get(lower) || lower;
+}
+
 /**
  * Given a candidate name and a list of existing names, return the
  * existing name with the highest similarity if it's above threshold,
- * otherwise null.
+ * otherwise null. Now also checks category alias equivalence.
  */
 export function findSimilarExisting(candidateName, existingNames, threshold = 0.72) {
+  const candidateNorm = normalizeToAlias(candidateName);
   let best = null;
   let bestScore = 0;
   for (const name of existingNames) {
+    const nameNorm = normalizeToAlias(name);
+
+    // Alias match — these are semantically identical categories
+    if (candidateNorm === nameNorm) {
+      return name; // instant match, no need to check further
+    }
+
     const score = similarity(candidateName, name);
     if (score > bestScore) {
       bestScore = score;

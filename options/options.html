@@ -97,7 +97,23 @@
     </section>
 
     <section class="card">
-      <h2>5. Activity log</h2>
+      <h2>5. Grouping rules</h2>
+      <p class="hint">
+        Define custom routing rules to force tabs matching a domain or keyword into a specific group.
+        Rules are checked before the LLM. Format: one rule per line as <code>domain-or-keyword → Group Name</code>.
+        Use <code>*.domain.com</code> for wildcard subdomains. Colors are optional: add <code>: color</code> at the end.
+      </p>
+      <label class="field">
+        <span>Routing rules (one per line)</span>
+        <textarea id="groupingRulesInput" rows="8" placeholder="*.jira.company.com → Work: blue&#10;github.com → Development: grey&#10;coursera.org → Education: blue"></textarea>
+      </label>
+      <div class="row">
+        <button id="saveRulesBtn" class="btn primary">Save grouping rules</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>6. Activity log</h2>
       <div class="row">
         <button id="clearLogBtn" class="btn secondary">Clear activity log</button>
       </div>

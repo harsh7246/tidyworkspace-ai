@@ -36,6 +36,7 @@ export const SWEEP_ALARM_NAME = 'sweep-alarm';
 export const DEFAULT_SWEEP_PERIOD_MINUTES = 0.5; // ~30s, Chrome's practical minimum
 export const RENAME_TIMEOUT_MS = 2500;
 export const ACTION_LOG_MAX_ENTRIES = 20;
+export const MAX_BATCH_SIZE = 25; // max tabs per LLM request to avoid token overflow
 
 // Sensible starting exclusion list. User-editable in options.
 export const DEFAULT_EXCLUSION_LIST = [
@@ -64,5 +65,6 @@ export const STORAGE_KEYS = {
   PENDING_TABS: 'tw_pending_tabs', // session storage
   GROUPING_PAUSED: 'tw_grouping_paused', // { paused: bool, reason: string }
   RENAMING_PAUSED: 'tw_renaming_paused',
-  RECENT_RENAMES: 'tw_recent_renames' // for dedupe-suffix heuristic
+  RECENT_RENAMES: 'tw_recent_renames', // for dedupe-suffix heuristic
+  GROUPING_RULES: 'tw_grouping_rules' // [{ pattern: string, group: string, color?: string }]
 };

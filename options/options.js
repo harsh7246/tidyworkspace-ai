@@ -43,6 +43,9 @@ const saveSweepBtn = document.getElementById('saveSweepBtn');
 const exclusionListInput = document.getElementById('exclusionListInput');
 const saveExclusionBtn = document.getElementById('saveExclusionBtn');
 
+const groupingRulesInput = document.getElementById('groupingRulesInput');
+const saveRulesBtn = document.getElementById('saveRulesBtn');
+
 const clearLogBtn = document.getElementById('clearLogBtn');
 const savedToast = document.getElementById('savedToast');
 
@@ -65,6 +68,9 @@ async function init() {
 
   const exclusionList = await local.get(STORAGE_KEYS.EXCLUSION_LIST, DEFAULT_EXCLUSION_LIST);
   exclusionListInput.value = exclusionList.join('\n');
+
+  const groupingRules = await local.get(STORAGE_KEYS.GROUPING_RULES, []);
+  groupingRulesInput.value = formatRulesForDisplay(groupingRules);
 
   providerSelect.addEventListener('change', async () => {
     const apiKeysNow = await local.get(STORAGE_KEYS.API_KEYS, {});
@@ -199,6 +205,12 @@ saveExclusionBtn.addEventListener('click', async () => {
   showToast('Exclusion list saved.');
 });
 
+saveRulesBtn.addEventListener('click', async () => {
+  const rules = parseRulesFromDisplay(groupingRulesInput.value);
+  await local.set({ [STORAGE_KEYS.GROUPING_RULES]: rules });
+  showToast('Grouping rules saved.');
+});
+
 clearLogBtn.addEventListener('click', async () => {
   await local.set({ [STORAGE_KEYS.ACTION_LOG]: [] });
   showToast('Activity log cleared.');
@@ -210,6 +222,50 @@ function showToast(message) {
   savedToast.classList.add('visible');
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => savedToast.classList.remove('visible'), 2200);
+}
+
+/**
+ * Parse rules from display format: "domain-or-keyword → Group Name: color"
+ * Returns array of { pattern, group, color } objects.
+ */
+function parseRulesFromDisplay(text) {
+  const rules = [];
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    // Support both → and -> arrow separators
+    const parts = line.split(/→|->/);
+    if (parts.length < 2) continue;
+    const pattern = parts[0].trim();
+    const rest = parts[1].trim();
+    // Check for optional color after colon
+    let group = rest;
+    let color = null;
+    const colonIdx = rest.lastIndexOf(':');
+    if (colonIdx > 0) {
+      const maybeColor = rest.slice(colonIdx + 1).trim().toLowerCase();
+      const VALID_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
+      if (VALID_COLORS.includes(maybeColor)) {
+        color = maybeColor;
+        group = rest.slice(0, colonIdx).trim();
+      }
+    }
+    if (pattern && group) {
+      rules.push({ pattern, group, color });
+    }
+  }
+  return rules;
+}
+
+/**
+ * Format rules array back to display string for the textarea.
+ */
+function formatRulesForDisplay(rules) {
+  if (!rules || rules.length === 0) return '';
+  return rules.map((r) => {
+    let line = `${r.pattern} → ${r.group}`;
+    if (r.color) line += `: ${r.color}`;
+    return line;
+  }).join('\n');
 }
 
 init();
