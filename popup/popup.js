@@ -26,21 +26,21 @@ async function renderStatus() {
 
   const provider = await local.get(STORAGE_KEYS.PROVIDER, null);
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
-  const hasKey = provider && apiKeys[provider];
+  const hasKey = provider && (apiKeys[provider] || provider === 'ollama');
 
   if (!hasKey) {
-    addBanner('warn', 'Set up your API key to enable TidyWorkspace AI.', true);
+    addBanner('warn', 'Set up your provider to enable TidyWorkspace AI.', true);
     return;
   }
 
   const groupingPaused = await local.get(STORAGE_KEYS.GROUPING_PAUSED, { paused: false });
   if (groupingPaused.paused) {
-    addBanner('warn', 'Grouping paused — check your API key.', true);
+    addBanner('warn', 'Grouping paused — check your settings.', true);
   }
 
   const renamingPaused = await local.get(STORAGE_KEYS.RENAMING_PAUSED, { paused: false });
   if (renamingPaused.paused) {
-    addBanner('warn', 'Renaming paused — check your API key.', true);
+    addBanner('warn', 'Renaming paused — check your settings.', true);
   }
 }
 

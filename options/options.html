@@ -23,12 +23,18 @@
           <option value="openai">OpenAI</option>
           <option value="claude">Anthropic Claude</option>
           <option value="deepseek">DeepSeek</option>
+          <option value="ollama">Ollama (Local)</option>
         </select>
       </label>
 
-      <label class="field">
+      <label class="field" id="apiKeyField">
         <span>API key</span>
         <input type="password" id="apiKeyInput" placeholder="Paste your API key" autocomplete="off" />
+      </label>
+
+      <label class="field" id="ollamaUrlField" style="display: none;">
+        <span>Ollama URL</span>
+        <input type="text" id="ollamaUrlInput" placeholder="http://localhost:11434" autocomplete="off" />
       </label>
 
       <div class="row">

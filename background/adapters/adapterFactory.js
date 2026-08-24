@@ -6,13 +6,15 @@ import { GeminiAdapter } from './geminiAdapter.js';
 import { OpenAIAdapter } from './openaiAdapter.js';
 import { ClaudeAdapter } from './claudeAdapter.js';
 import { DeepSeekAdapter } from './deepseekAdapter.js';
+import { OllamaAdapter } from './ollamaAdapter.js';
 import { LLMAdapterError } from './adapter.interface.js';
 
 const ADAPTER_CLASSES = {
   [PROVIDERS.GEMINI]: GeminiAdapter,
   [PROVIDERS.OPENAI]: OpenAIAdapter,
   [PROVIDERS.CLAUDE]: ClaudeAdapter,
-  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter
+  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter,
+  [PROVIDERS.OLLAMA]: OllamaAdapter
 };
 
 /**
@@ -28,9 +30,15 @@ export async function getActiveAdapter() {
 
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
   const apiKey = apiKeys[provider];
-  if (!apiKey) {
+
+  // For Ollama, API key is optional (empty string is fine), but we need the base URL
+  const isOllama = provider === PROVIDERS.OLLAMA;
+  if (!isOllama && !apiKey) {
     return { adapter: null, provider, models: null, reason: 'no-api-key' };
   }
+
+  const ollamaUrls = await local.get(STORAGE_KEYS.OLLAMA_URLS, {});
+  const ollamaUrl = ollamaUrls[provider] || 'http://localhost:11434';
 
   const modelChoices = await local.get(STORAGE_KEYS.MODEL_CHOICES, {});
   const models = {
@@ -39,7 +47,8 @@ export async function getActiveAdapter() {
   };
 
   const AdapterClass = ADAPTER_CLASSES[provider];
-  return { adapter: new AdapterClass(apiKey), provider, models, reason: null };
+  const adapter = isOllama ? new AdapterClass('', ollamaUrl) : new AdapterClass(apiKey);
+  return { adapter, provider, models, reason: null };
 }
 
 /**
