@@ -10,14 +10,16 @@ export const PROVIDERS = {
   GEMINI: 'gemini',
   OPENAI: 'openai',
   CLAUDE: 'claude',
-  DEEPSEEK: 'deepseek'
+  DEEPSEEK: 'deepseek',
+  OLLAMA: 'ollama'
 };
 
 export const PROVIDER_LABELS = {
   [PROVIDERS.GEMINI]: 'Google Gemini',
   [PROVIDERS.OPENAI]: 'OpenAI',
   [PROVIDERS.CLAUDE]: 'Anthropic Claude',
-  [PROVIDERS.DEEPSEEK]: 'DeepSeek'
+  [PROVIDERS.DEEPSEEK]: 'DeepSeek',
+  [PROVIDERS.OLLAMA]: 'Local DeepSeek (Ollama - Free)'
 };
 
 // Reasonable default models per provider per feature. User can override in
@@ -26,7 +28,8 @@ export const DEFAULT_MODELS = {
   [PROVIDERS.GEMINI]: { grouping: 'gemini-3.6-flash', renaming: 'gemini-3.6-flash' },
   [PROVIDERS.OPENAI]: { grouping: 'gpt-4o-mini', renaming: 'gpt-4o-mini' },
   [PROVIDERS.CLAUDE]: { grouping: 'claude-sonnet-4-6', renaming: 'claude-haiku-4-5-20251001' },
-  [PROVIDERS.DEEPSEEK]: { grouping: 'deepseek-chat', renaming: 'deepseek-chat' }
+  [PROVIDERS.DEEPSEEK]: { grouping: 'deepseek-chat', renaming: 'deepseek-chat' },
+  [PROVIDERS.OLLAMA]: { grouping: 'deepseek-r1:1.3b', renaming: 'deepseek-r1:1.3b' }
 };
 
 export const SWEEP_ALARM_NAME = 'sweep-alarm';

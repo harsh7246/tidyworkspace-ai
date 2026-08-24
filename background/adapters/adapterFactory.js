@@ -7,12 +7,14 @@ import { OpenAIAdapter } from './openaiAdapter.js';
 import { ClaudeAdapter } from './claudeAdapter.js';
 import { DeepSeekAdapter } from './deepseekAdapter.js';
 import { LLMAdapterError } from './adapter.interface.js';
+import { OllamaAdapter } from './ollamaAdapter.js';
 
 const ADAPTER_CLASSES = {
   [PROVIDERS.GEMINI]: GeminiAdapter,
   [PROVIDERS.OPENAI]: OpenAIAdapter,
   [PROVIDERS.CLAUDE]: ClaudeAdapter,
-  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter
+  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter,
+  [PROVIDERS.OLLAMA]: OllamaAdapter
 };
 
 /**
@@ -28,18 +30,22 @@ export async function getActiveAdapter() {
 
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
   const apiKey = apiKeys[provider];
-  if (!apiKey) {
+
+  // Allow Ollama to pass through without requiring an API key
+  if (!apiKey && provider !== PROVIDERS.OLLAMA) {
     return { adapter: null, provider, models: null, reason: 'no-api-key' };
   }
 
   const modelChoices = await local.get(STORAGE_KEYS.MODEL_CHOICES, {});
+  
+  // Guard DEFAULT_MODELS[provider] to prevent errors if Ollama defaults aren't set
   const models = {
-    ...DEFAULT_MODELS[provider],
+    ...(DEFAULT_MODELS[provider] || {}),
     ...(modelChoices[provider] || {})
   };
 
   const AdapterClass = ADAPTER_CLASSES[provider];
-  return { adapter: new AdapterClass(apiKey), provider, models, reason: null };
+  return { adapter: new AdapterClass(apiKey || ''), provider, models, reason: null };
 }
 
 /**
@@ -53,6 +59,10 @@ export async function requestStructured(adapter, { system, prompt, responseSchem
   const raw = await adapter.complete({ system, prompt, responseSchema, maxTokens, model, signal });
 
   let cleaned = raw.trim();
+
+  // Strip <think>...</think> tags emitted by DeepSeek-R1 or other local reasoning models
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
   // Strip markdown code fences some providers add despite instructions.
   if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```(json)?/i, '').replace(/```$/, '').trim();

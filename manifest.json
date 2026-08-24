@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TidyWorkspace AI",
-  "description": "AI-powered tab grouping and download renaming. Bring your own API key (Gemini, OpenAI, Claude, or DeepSeek).",
+  "description": "AI-powered tab grouping and download renaming. Supports Gemini, OpenAI, Claude, DeepSeek, and local models via Ollama.",
   "version": "1.0.0",
   "permissions": [
     "tabs",
@@ -12,6 +12,8 @@
     "notifications"
   ],
   "host_permissions": [
+    "http://localhost:11434/*",
+    "http://127.0.0.1:11434/*",
     "https://generativelanguage.googleapis.com/*",
     "https://api.openai.com/*",
     "https://api.anthropic.com/*",

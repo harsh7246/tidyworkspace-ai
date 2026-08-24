@@ -1,6 +1,6 @@
 // background/tabSweeper.js
 // §4.1 — Tab Sweeper & Grouping Engine
-
+import { queryOllama } from './adapters/ollamaAdapter.js';
 import { local, updateLocal, updateSession } from '../shared/storage.js';
 import {
   STORAGE_KEYS,
@@ -16,12 +16,13 @@ import { logGroupAction } from './actionLog.js';
 import { notifyPipelinePaused, notifyPipelineResumed } from './notify.js';
 
 // REPLACE lines L18-L25 with this:
-const SYSTEM_PROMPT = `You are a browser tab organizer. IMPORTANT: when you respond, output ONLY valid JSON (no prose, no explanation, no markdown, no code fences).
+const SYSTEM_PROMPT = `You are a browser tab organizer. IMPORTANT: when you respond, output ONLY valid JSON.
+Do not use <think> tags. Do not include reasoning, prose, explanations, markdown formatting, or code fences (like \`\`\`json). 
+Your entire response must start with { and end with }.
 The JSON must match the expected schema: { "decisions": [ { "tabId": number, "existingGroupId": string|null, "newGroupName": string|null, "color": string|null } ] }.
 Every candidate tab must appear exactly once in "decisions" with either existingGroupId (string) or newGroupName (string).
 If you cannot produce valid JSON for any reason, respond with exactly: {"decisions": [], "error": "UNABLE_TO_GENERATE_VALID_JSON"}.
 Group names should be short (1-3 words) and generic categories (e.g. "Shopping", "Research", "Travel").`;
-
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: {

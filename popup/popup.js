@@ -1,7 +1,7 @@
 // popup/popup.js
 
 import { local } from '../shared/storage.js';
-import { STORAGE_KEYS } from '../shared/constants.js';
+import { STORAGE_KEYS, PROVIDERS } from '../shared/constants.js';
 import { getActionLog, undoEntry } from '../background/actionLog.js';
 
 const statusSection = document.getElementById('statusSection');
@@ -26,7 +26,9 @@ async function renderStatus() {
 
   const provider = await local.get(STORAGE_KEYS.PROVIDER, null);
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
-  const hasKey = provider && apiKeys[provider];
+  
+  // Allow Ollama to pass status check without an API key
+  const hasKey = provider && (provider === PROVIDERS.OLLAMA || apiKeys[provider]);
 
   if (!hasKey) {
     addBanner('warn', 'Set up your API key to enable TidyWorkspace AI.', true);
@@ -35,12 +37,12 @@ async function renderStatus() {
 
   const groupingPaused = await local.get(STORAGE_KEYS.GROUPING_PAUSED, { paused: false });
   if (groupingPaused.paused) {
-    addBanner('warn', 'Grouping paused — check your API key.', true);
+    addBanner('warn', 'Grouping paused — check your settings or provider connection.', true);
   }
 
   const renamingPaused = await local.get(STORAGE_KEYS.RENAMING_PAUSED, { paused: false });
   if (renamingPaused.paused) {
-    addBanner('warn', 'Renaming paused — check your API key.', true);
+    addBanner('warn', 'Renaming paused — check your settings or provider connection.', true);
   }
 }
 

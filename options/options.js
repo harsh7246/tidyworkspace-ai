@@ -12,12 +12,14 @@ import { GeminiAdapter } from '../background/adapters/geminiAdapter.js';
 import { OpenAIAdapter } from '../background/adapters/openaiAdapter.js';
 import { ClaudeAdapter } from '../background/adapters/claudeAdapter.js';
 import { DeepSeekAdapter } from '../background/adapters/deepseekAdapter.js';
+import { OllamaAdapter } from '../background/adapters/ollamaAdapter.js';
 
 const ADAPTER_CLASSES = {
   [PROVIDERS.GEMINI]: GeminiAdapter,
   [PROVIDERS.OPENAI]: OpenAIAdapter,
   [PROVIDERS.CLAUDE]: ClaudeAdapter,
-  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter
+  [PROVIDERS.DEEPSEEK]: DeepSeekAdapter,
+  [PROVIDERS.OLLAMA]: OllamaAdapter
 };
 
 const providerSelect = document.getElementById('providerSelect');
@@ -48,6 +50,7 @@ async function init() {
   const apiKeys = await local.get(STORAGE_KEYS.API_KEYS, {});
   apiKeyInput.value = apiKeys[provider] || '';
 
+  updateApiKeyUI(provider);
   await loadModelInputsForProvider(provider);
 
   groupingEnabled.checked = await local.get(STORAGE_KEYS.GROUPING_ENABLED, true);
@@ -58,11 +61,24 @@ async function init() {
   exclusionListInput.value = exclusionList.join('\n');
 
   providerSelect.addEventListener('change', async () => {
+    const selectedProvider = providerSelect.value;
     const apiKeysNow = await local.get(STORAGE_KEYS.API_KEYS, {});
-    apiKeyInput.value = apiKeysNow[providerSelect.value] || '';
+    apiKeyInput.value = apiKeysNow[selectedProvider] || '';
+    
+    updateApiKeyUI(selectedProvider);
     testResult.textContent = '';
-    await loadModelInputsForProvider(providerSelect.value);
+    await loadModelInputsForProvider(selectedProvider);
   });
+}
+
+function updateApiKeyUI(provider) {
+  if (provider === PROVIDERS.OLLAMA) {
+    apiKeyInput.placeholder = 'Not required for local Ollama';
+    apiKeyInput.disabled = true;
+  } else {
+    apiKeyInput.placeholder = 'Enter API key';
+    apiKeyInput.disabled = false;
+  }
 }
 
 async function loadModelInputsForProvider(provider) {
@@ -81,7 +97,7 @@ testConnectionBtn.addEventListener('click', async () => {
   testResult.textContent = 'Testing…';
   testResult.className = 'test-result';
 
-  if (!key) {
+  if (!key && provider !== PROVIDERS.OLLAMA) {
     testResult.textContent = 'Enter an API key first.';
     testResult.className = 'test-result error';
     return;
@@ -89,7 +105,7 @@ testConnectionBtn.addEventListener('click', async () => {
 
   const AdapterClass = ADAPTER_CLASSES[provider];
   const adapter = new AdapterClass(key);
-  const model = (DEFAULT_MODELS[provider] || {}).renaming;
+  const model = (DEFAULT_MODELS[provider] || {}).renaming || (DEFAULT_MODELS[provider] || {}).grouping;
 
   try {
     await adapter.complete({
