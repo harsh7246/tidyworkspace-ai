@@ -36,7 +36,7 @@ export const SWEEP_ALARM_NAME = 'sweep-alarm';
 export const DEFAULT_SWEEP_PERIOD_MINUTES = 0.5; // ~30s, Chrome's practical minimum
 export const RENAME_TIMEOUT_MS = 2500;
 export const ACTION_LOG_MAX_ENTRIES = 20;
-export const MAX_BATCH_SIZE = 25; // max tabs per LLM request to avoid token overflow
+export const MAX_BATCH_SIZE = 3; // max tabs per LLM request to avoid token overflow
 
 // Sensible starting exclusion list. User-editable in options.
 export const DEFAULT_EXCLUSION_LIST = [
