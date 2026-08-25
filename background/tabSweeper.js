@@ -22,8 +22,8 @@ RULES:
 1. Output ONLY valid JSON — no prose, no explanation, no markdown, no code fences.
 2. Every candidate tab MUST appear exactly once in "decisions".
 3. Each decision has either "existingGroupId" (to reuse an existing group) or "newGroupName" (to create a new group). Never both.
-4. Group names must be SHORT (1-3 words), LOWERCASE first letter, and GENERIC categories.
-5. Prefer REUSING existing groups over creating new ones — check the "existingGroups" list carefully.
+4. Group names must be SHORT (1-2 words), LOWERCASE first letter, and GENERIC categories , keep it as short and generic as possible and resue the tabs strictly so that not many tabs are generated.
+5. Prefer REUSING existing groups over creating new ones — check the "existingGroups" list carefully and try making not more than 6 groups if possible.
 
 GROUPING HEURISTICS (apply in order):
 - DOMAIN FAMILIES: Group tabs sharing a root domain or brand together.
